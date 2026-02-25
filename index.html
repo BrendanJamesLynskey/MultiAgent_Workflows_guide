@@ -487,8 +487,9 @@ footer a:hover { color: var(--text-bright); }
   <h1>Multi-Agent<br><em>Workflows</em></h1>
   <p class="hero-sub">
     A comprehensive guide to how AI agents coordinate, delegate, and execute — from the
-    fundamental agent loop to production multi-agent orchestration. With real-world architecture
-    from <strong>OpenClaw</strong> and the <strong>OpenAI Agents SDK</strong>.
+    fundamental agent loop to production multi-agent orchestration. With real-world examples
+    from <strong>LangGraph</strong>, the <strong>OpenAI Agents SDK</strong>, and
+    <strong>OpenClaw</strong>.
   </p>
 </div>
 </header>
@@ -503,8 +504,9 @@ footer a:hover { color: var(--text-bright); }
     <a href="#orchestration">Orchestration Patterns</a>
     <a href="#handoffs">Handoffs</a>
     <a href="#guardrails">Guardrails</a>
-    <a href="#openclaw">OpenClaw Deep Dive</a>
+    <a href="#langgraph">LangGraph</a>
     <a href="#agents-sdk">OpenAI Agents SDK</a>
+    <a href="#openclaw">OpenClaw Infrastructure</a>
     <a href="#tracing">Tracing &amp; Debugging</a>
     <a href="#production">Production Checklist</a>
   </div>
@@ -1175,203 +1177,218 @@ footer a:hover { color: var(--text-bright); }
 </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ 7. OPENCLAW DEEP DIVE -->
-<section id="openclaw">
+<!-- ═══════════════════════════════════════════════════════ 7. LANGGRAPH -->
+<section id="langgraph">
 <div class="container">
-  <div class="section-label">07 — Case Study</div>
-  <h2>OpenClaw: Multi-Agent in the Real World</h2>
+  <div class="section-label">07 — Graph-Based Orchestration</div>
+  <h2>LangGraph: Workflows as Graphs</h2>
   <p>
-    <strong>OpenClaw</strong> is an open-source autonomous AI agent framework created by Peter Steinberger
-    that surpassed 200k+ GitHub stars in early 2026. It's a production-grade example of multi-agent
-    architecture — not just the agent loop, but everything around it: routing, sessions, memory,
-    skills, and multi-channel delivery.
+    <strong>LangGraph</strong> is a stateful orchestration framework (part of the LangChain ecosystem)
+    that models multi-agent workflows as <strong>directed graphs</strong>. Each agent is a node,
+    connections are edges, and a shared <strong>State</strong> object flows through the graph —
+    updated by each node as it executes. This is arguably the most explicit and visual way to
+    define multi-agent systems.
   </p>
 
-  <h3>Architecture Overview</h3>
-  <p>
-    OpenClaw's architecture breaks into four layers. The key insight is that the core agent loop
-    (ReAct cycle) is delegated to the <strong>Pi Agent</strong> framework — OpenClaw itself focuses
-    on the gateway, orchestration, integration, and intelligence layers that make the agent loop
-    <em>useful</em> in production.
-  </p>
+  <h3>Core Primitives</h3>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="concept-icon">📊</div>
+      <h3>StateGraph</h3>
+      <p>The graph container. You define a typed State schema, then add nodes and edges. The state is shared across all nodes and updated with reducer functions.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">⚙️</div>
+      <h3>Nodes</h3>
+      <p>Python functions that receive the current state, perform work (LLM calls, tool use, logic), and return a partial state update. Each node is an agent or processing step.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">➡️</div>
+      <h3>Edges</h3>
+      <p>Connections between nodes. <strong>Normal edges</strong> are static (A→B). <strong>Conditional edges</strong> evaluate state to decide the next node dynamically — enabling routing, loops, and branching.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🔄</div>
+      <h3>Cycles &amp; Loops</h3>
+      <p>Unlike simple DAGs, LangGraph supports cycles — a critic agent can loop back to a writer agent until quality thresholds are met. This is central to the reflection pattern.</p>
+    </div>
+  </div>
 
-  <!-- OPENCLAW ARCHITECTURE DIAGRAM -->
+  <!-- LANGGRAPH SUPERVISOR DIAGRAM -->
   <div class="diagram-wrap">
-    <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg" fill="none">
-      <pattern id="dots6" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+    <svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <pattern id="dots-lg" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
         <circle cx="1" cy="1" r=".5" fill="#1e2130"/>
       </pattern>
-      <rect width="800" height="500" fill="url(#dots6)"/>
+      <rect width="800" height="380" fill="url(#dots-lg)"/>
 
-      <!-- LAYER 1: Channels -->
-      <rect x="30" y="15" width="740" height="70" rx="10" fill="#6c7bf708" stroke="#6c7bf730" stroke-width="1"/>
-      <text x="60" y="38" fill="#6c7bf7" font-family="JetBrains Mono, monospace" font-size="9" font-weight="600">CHANNEL LAYER</text>
-      <text x="60" y="55" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="9">WhatsApp • Telegram • Slack • Discord • Signal • iMessage • Teams • Matrix • WebChat</text>
-      <text x="60" y="72" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8.5">Each adapter normalizes messages into a common format → routes into Gateway</text>
+      <!-- Title -->
+      <text x="400" y="25" text-anchor="middle" fill="#6b6f87" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" letter-spacing="1">LANGGRAPH SUPERVISOR PATTERN</text>
 
-      <!-- Arrow -->
-      <line x1="400" y1="85" x2="400" y2="105" stroke="#6c7bf730" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <!-- START node -->
+      <circle cx="90" cy="180" r="22" fill="#6c7bf720" stroke="#6c7bf7" stroke-width="1.5"/>
+      <text x="90" y="184" text-anchor="middle" fill="#6c7bf7" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">START</text>
 
-      <!-- LAYER 2: Gateway -->
-      <rect x="30" y="105" width="740" height="100" rx="10" fill="#f77c6c08" stroke="#f77c6c30" stroke-width="1"/>
-      <text x="60" y="128" fill="#f77c6c" font-family="JetBrains Mono, monospace" font-size="9" font-weight="600">GATEWAY (Control Plane) — ws://127.0.0.1:18789</text>
+      <!-- Edge START → Supervisor -->
+      <line x1="112" y1="180" x2="195" y2="180" stroke="#6c7bf750" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-      <rect x="55" y="140" width="145" height="45" rx="6" fill="#12141c" stroke="#f77c6c20" stroke-width="1"/>
-      <text x="128" y="160" text-anchor="middle" fill="#f77c6c" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">Session Manager</text>
-      <text x="128" y="175" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Route → Session Key</text>
+      <!-- Supervisor -->
+      <rect x="195" y="145" width="170" height="70" rx="12" fill="#1a1530" stroke="#c76cf7" stroke-width="2"/>
+      <text x="280" y="172" text-anchor="middle" fill="#c76cf7" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600">👑 Supervisor</text>
+      <text x="280" y="192" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="9">Routes via conditional edge</text>
+      <text x="280" y="206" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">next: "research" | "writer" | END</text>
 
-      <rect x="215" y="140" width="145" height="45" rx="6" fill="#12141c" stroke="#f77c6c20" stroke-width="1"/>
-      <text x="288" y="160" text-anchor="middle" fill="#f77c6c" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">Lane Queue</text>
-      <text x="288" y="175" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Serial per-session</text>
+      <!-- Conditional edges from Supervisor -->
+      <!-- To Research (up) -->
+      <path d="M365,165 Q420,100 475,115" fill="none" stroke="#f77c6c" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+      <text x="410" y="110" fill="#f77c6c" font-family="JetBrains Mono, monospace" font-size="7.5">next="research"</text>
 
-      <rect x="375" y="140" width="145" height="45" rx="6" fill="#12141c" stroke="#f77c6c20" stroke-width="1"/>
-      <text x="448" y="160" text-anchor="middle" fill="#f77c6c" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">Agent Router</text>
-      <text x="448" y="175" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Bindings → agentId</text>
+      <!-- To Writer (down) -->
+      <path d="M365,195 Q420,260 475,245" fill="none" stroke="#6cf7a8" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+      <text x="410" y="265" fill="#6cf7a8" font-family="JetBrains Mono, monospace" font-size="7.5">next="writer"</text>
 
-      <rect x="535" y="140" width="145" height="45" rx="6" fill="#12141c" stroke="#f77c6c20" stroke-width="1"/>
-      <text x="608" y="160" text-anchor="middle" fill="#f77c6c" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">Auth &amp; Policy</text>
-      <text x="608" y="175" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">5-level chain</text>
+      <!-- To END (right) -->
+      <line x1="365" y1="180" x2="680" y2="180" stroke="#f7d26c" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-yellow)"/>
+      <text x="530" y="172" fill="#f7d26c" font-family="JetBrains Mono, monospace" font-size="7.5">next="FINISH"</text>
 
-      <!-- Arrow -->
-      <line x1="400" y1="205" x2="400" y2="225" stroke="#f77c6c30" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <!-- Research Agent -->
+      <rect x="475" y="85" width="155" height="65" rx="10" fill="#12141c" stroke="#f77c6c" stroke-width="1.5"/>
+      <text x="553" y="112" text-anchor="middle" fill="#f77c6c" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600">🔍 Research</text>
+      <text x="553" y="130" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="9">Web search, RAG</text>
+      <text x="553" y="143" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Updates state.research</text>
 
-      <!-- LAYER 3: Agent Runtime -->
-      <rect x="30" y="225" width="740" height="120" rx="10" fill="#c76cf708" stroke="#c76cf730" stroke-width="1"/>
-      <text x="60" y="248" fill="#c76cf7" font-family="JetBrains Mono, monospace" font-size="9" font-weight="600">AGENT RUNTIME (Pi Agent Core)</text>
+      <!-- Writer Agent -->
+      <rect x="475" y="215" width="155" height="65" rx="10" fill="#12141c" stroke="#6cf7a8" stroke-width="1.5"/>
+      <text x="553" y="242" text-anchor="middle" fill="#6cf7a8" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600">✍️ Writer</text>
+      <text x="553" y="260" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="9">Generates content</text>
+      <text x="553" y="273" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Updates state.draft</text>
 
-      <rect x="55" y="260" width="175" height="65" rx="6" fill="#12141c" stroke="#c76cf720" stroke-width="1"/>
-      <text x="143" y="282" text-anchor="middle" fill="#c76cf7" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">Context Assembly</text>
-      <text x="143" y="296" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">SOUL.md + AGENTS.md</text>
-      <text x="143" y="310" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">+ Skills + Memory + History</text>
+      <!-- Back edges to Supervisor -->
+      <path d="M475,120 Q420,135 365,160" fill="none" stroke="#f77c6c50" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-dim)"/>
+      <path d="M475,240 Q420,225 365,200" fill="none" stroke="#6cf7a850" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-dim)"/>
 
-      <rect x="250" y="260" width="130" height="65" rx="6" fill="#1a1530" stroke="#c76cf740" stroke-width="1.5"/>
-      <text x="315" y="282" text-anchor="middle" fill="#c76cf7" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">🔄 Agent Loop</text>
-      <text x="315" y="296" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">LLM → Tool → Loop</text>
-      <text x="315" y="310" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">until final output</text>
+      <!-- END node -->
+      <circle cx="710" cy="180" r="22" fill="#f7d26c20" stroke="#f7d26c" stroke-width="1.5"/>
+      <text x="710" y="184" text-anchor="middle" fill="#f7d26c" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">END</text>
 
-      <rect x="400" y="260" width="175" height="65" rx="6" fill="#12141c" stroke="#c76cf720" stroke-width="1"/>
-      <text x="488" y="282" text-anchor="middle" fill="#c76cf7" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">Tool Execution</text>
-      <text x="488" y="296" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Shell • Browser • Canvas</text>
-      <text x="488" y="310" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Cron • Nodes • APIs</text>
-
-      <rect x="595" y="260" width="155" height="65" rx="6" fill="#12141c" stroke="#c76cf720" stroke-width="1"/>
-      <text x="673" y="282" text-anchor="middle" fill="#c76cf7" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">Streaming</text>
-      <text x="673" y="296" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Text deltas + blocks</text>
-      <text x="673" y="310" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Tool events streamed</text>
-
-      <!-- Arrow -->
-      <line x1="400" y1="345" x2="400" y2="365" stroke="#c76cf730" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-      <!-- LAYER 4: Intelligence -->
-      <rect x="30" y="365" width="740" height="120" rx="10" fill="#6cf7a808" stroke="#6cf7a830" stroke-width="1"/>
-      <text x="60" y="388" fill="#6cf7a8" font-family="JetBrains Mono, monospace" font-size="9" font-weight="600">INTELLIGENCE LAYER</text>
-
-      <rect x="55" y="400" width="145" height="65" rx="6" fill="#12141c" stroke="#6cf7a820" stroke-width="1"/>
-      <text x="128" y="422" text-anchor="middle" fill="#6cf7a8" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">📂 Skills</text>
-      <text x="128" y="436" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">SKILL.md files</text>
-      <text x="128" y="450" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">ClawHub registry</text>
-
-      <rect x="215" y="400" width="145" height="65" rx="6" fill="#12141c" stroke="#6cf7a820" stroke-width="1"/>
-      <text x="288" y="422" text-anchor="middle" fill="#6cf7a8" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">🧠 Memory</text>
-      <text x="288" y="436" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">MEMORY.md files</text>
-      <text x="288" y="450" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Compaction pipeline</text>
-
-      <rect x="375" y="400" width="145" height="65" rx="6" fill="#12141c" stroke="#6cf7a820" stroke-width="1"/>
-      <text x="448" y="422" text-anchor="middle" fill="#6cf7a8" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">💓 Heartbeat</text>
-      <text x="448" y="436" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Proactive scheduler</text>
-      <text x="448" y="450" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Cron-triggered runs</text>
-
-      <rect x="535" y="400" width="145" height="65" rx="6" fill="#12141c" stroke="#6cf7a820" stroke-width="1"/>
-      <text x="608" y="422" text-anchor="middle" fill="#6cf7a8" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600">🤖🤖 Multi-Agent</text>
-      <text x="608" y="436" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Agent routing</text>
-      <text x="608" y="450" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8">Isolated workspaces</text>
+      <!-- Shared State box -->
+      <rect x="170" y="300" width="460" height="55" rx="8" fill="#6c7bf708" stroke="#6c7bf730" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="400" y="322" text-anchor="middle" fill="#6c7bf7" font-family="JetBrains Mono, monospace" font-size="9" font-weight="600">SHARED STATE</text>
+      <text x="400" y="342" text-anchor="middle" fill="#6b6f87" font-family="DM Sans, sans-serif" font-size="8.5">messages: List[BaseMessage]  •  next: str  •  research: str  •  draft: str</text>
     </svg>
-    <div class="diagram-caption">Fig 6 — OpenClaw's four-layer architecture: Channels → Gateway → Agent Runtime → Intelligence</div>
+    <div class="diagram-caption">Fig 6 — LangGraph supervisor pattern: a central agent routes work to specialists via conditional edges, looping until done</div>
   </div>
 
-  <h3>OpenClaw's Multi-Agent Routing</h3>
-  <p>
-    In OpenClaw, each agent is a <strong>fully isolated persona</strong> with its own workspace
-    (SOUL.md, AGENTS.md), state directory, session store, authentication profiles, and skills.
-    The Gateway routes inbound messages to agents using <strong>bindings</strong> — deterministic
-    rules that match on channel, account, peer identity, guild, or team.
-  </p>
-  <p>
-    This means you can run multiple agents on a single Gateway server: a "work" agent on one
-    Telegram bot, a "personal" agent on WhatsApp, a "coding" agent on Discord — all isolated,
-    all with different personalities, tools, and models.
-  </p>
+  <h4>Code Example — Supervisor Pattern</h4>
+  <div class="code-block">
+    <div class="code-label">Python — LangGraph Multi-Agent Supervisor</div>
+<pre><span class="kw">from</span> <span class="var">typing</span> <span class="kw">import</span> <span class="type">Annotated</span>, <span class="type">Literal</span>
+<span class="kw">from</span> <span class="var">typing_extensions</span> <span class="kw">import</span> <span class="type">TypedDict</span>
+<span class="kw">from</span> <span class="var">langgraph.graph</span> <span class="kw">import</span> <span class="type">StateGraph</span>, <span class="var">START</span>, <span class="var">END</span>
+<span class="kw">from</span> <span class="var">langgraph.graph.message</span> <span class="kw">import</span> <span class="fn">add_messages</span>
 
-  <h4>Execution Sequence (per message)</h4>
-  <div class="step-grid">
-    <div class="step-card">
-      <div class="step-num">1</div>
-      <div>
-        <div class="step-title">Channel Adapter Receives</div>
-        <div class="step-desc">Platform-specific adapter (Baileys for WhatsApp, grammY for Telegram, etc.) normalizes the inbound message into a unified format, extracting attachments and metadata.</div>
-      </div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">2</div>
-      <div>
-        <div class="step-title">Gateway Routes to Session</div>
-        <div class="step-desc">The session manager resolves sender identity, matches bindings to determine <code>agentId</code>, and assigns a session key. The lane queue enforces serial execution per session.</div>
-      </div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">3</div>
-      <div>
-        <div class="step-title">System Prompt Assembled</div>
-        <div class="step-desc">Context is built from: <code>IDENTITY.md</code> → <code>SOUL.md</code> → <code>TOOLS.md</code> → active skills (selectively injected per turn) → memory files → conversation history. Token limits enforced.</div>
-      </div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">4</div>
-      <div>
-        <div class="step-title">Pi Agent Loop Executes</div>
-        <div class="step-desc">The Pi Agent core runs the ReAct loop: LLM inference → tool calls (with 5-level policy chain validation) → results fed back → loop until no tool calls remain.</div>
-      </div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">5</div>
-      <div>
-        <div class="step-title">Response Streamed Back</div>
-        <div class="step-desc">Text deltas are buffered and streamed to the channel adapter, which translates back into platform-specific format. Tool events are also emitted for debugging.</div>
-      </div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">6</div>
-      <div>
-        <div class="step-title">Transcript Persisted</div>
-        <div class="step-desc">The complete turn is written to a JSONL session transcript. The memory manager may run compaction to extract durable knowledge into <code>MEMORY.md</code>.</div>
-      </div>
-    </div>
+<span class="cmt"># ── Define shared state ──</span>
+<span class="kw">class</span> <span class="type">AgentState</span>(<span class="type">TypedDict</span>):
+    <span class="var">messages</span>: <span class="type">Annotated</span>[<span class="type">list</span>, <span class="fn">add_messages</span>]
+    <span class="var">next</span>: <span class="type">str</span>
+
+<span class="cmt"># ── Define agent nodes (each is a function) ──</span>
+<span class="kw">def</span> <span class="fn">supervisor</span>(<span class="var">state</span>: <span class="type">AgentState</span>) -> <span class="type">dict</span>:
+    <span class="str">"""Decides which agent acts next."""</span>
+    <span class="var">response</span> = <span class="var">llm</span>.<span class="fn">invoke</span>(<span class="var">state</span>[<span class="str">"messages"</span>])
+    <span class="kw">return</span> {<span class="str">"messages"</span>: [<span class="var">response</span>], <span class="str">"next"</span>: <span class="var">parse_next</span>(<span class="var">response</span>)}
+
+<span class="kw">def</span> <span class="fn">research_agent</span>(<span class="var">state</span>: <span class="type">AgentState</span>) -> <span class="type">dict</span>:
+    <span class="str">"""Searches the web and appends findings."""</span>
+    <span class="var">results</span> = <span class="fn">web_search</span>(<span class="var">state</span>[<span class="str">"messages"</span>][-<span class="var">1</span>].<span class="var">content</span>)
+    <span class="kw">return</span> {<span class="str">"messages"</span>: [<span class="type">AIMessage</span>(<span class="var">content</span>=<span class="var">results</span>)]}
+
+<span class="kw">def</span> <span class="fn">writer_agent</span>(<span class="var">state</span>: <span class="type">AgentState</span>) -> <span class="type">dict</span>:
+    <span class="str">"""Drafts content based on research."""</span>
+    <span class="var">draft</span> = <span class="var">llm</span>.<span class="fn">invoke</span>(<span class="var">state</span>[<span class="str">"messages"</span>])
+    <span class="kw">return</span> {<span class="str">"messages"</span>: [<span class="var">draft</span>]}
+
+<span class="cmt"># ── Build the graph ──</span>
+<span class="var">graph</span> = <span class="type">StateGraph</span>(<span class="type">AgentState</span>)
+<span class="var">graph</span>.<span class="fn">add_node</span>(<span class="str">"supervisor"</span>, <span class="var">supervisor</span>)
+<span class="var">graph</span>.<span class="fn">add_node</span>(<span class="str">"research"</span>, <span class="var">research_agent</span>)
+<span class="var">graph</span>.<span class="fn">add_node</span>(<span class="str">"writer"</span>, <span class="var">writer_agent</span>)
+
+<span class="cmt"># ── Wire edges ──</span>
+<span class="var">graph</span>.<span class="fn">add_edge</span>(<span class="var">START</span>, <span class="str">"supervisor"</span>)
+<span class="var">graph</span>.<span class="fn">add_conditional_edges</span>(<span class="str">"supervisor"</span>, <span class="kw">lambda</span> <span class="var">s</span>: <span class="var">s</span>[<span class="str">"next"</span>],
+    {<span class="str">"research"</span>: <span class="str">"research"</span>, <span class="str">"writer"</span>: <span class="str">"writer"</span>, <span class="str">"FINISH"</span>: <span class="var">END</span>})
+<span class="var">graph</span>.<span class="fn">add_edge</span>(<span class="str">"research"</span>, <span class="str">"supervisor"</span>)  <span class="cmt"># Loop back</span>
+<span class="var">graph</span>.<span class="fn">add_edge</span>(<span class="str">"writer"</span>, <span class="str">"supervisor"</span>)    <span class="cmt"># Loop back</span>
+
+<span class="cmt"># ── Compile and run ──</span>
+<span class="var">app</span> = <span class="var">graph</span>.<span class="fn">compile</span>()
+<span class="var">result</span> = <span class="var">app</span>.<span class="fn">invoke</span>({<span class="str">"messages"</span>: [<span class="type">HumanMessage</span>(<span class="str">"Write a blog post about AI agents"</span>)]})</pre>
   </div>
 
-  <div class="callout callout-success">
-    <div class="callout-title" style="color: var(--accent3);">Key Design Principle</div>
+  <div class="callout">
+    <div class="callout-title" style="color: var(--accent);">Why Graphs Matter</div>
     <p>
-      OpenClaw doesn't implement its own agent runtime — it delegates the "think and act" cycle
-      to Pi Agent and focuses on everything else: channel normalization, session management,
-      memory persistence, skill extensibility, and security enforcement. This separation reflects
-      the insight that the hard problem in production agents isn't the loop itself, but the
-      infrastructure around it.
+      The graph-based approach makes multi-agent workflows <strong>explicit and inspectable</strong>.
+      You can visualize the entire workflow, set breakpoints at any node for human-in-the-loop review,
+      "time-travel" to roll back and re-run from any state, and use LangSmith for production-grade
+      observability. The tradeoff is a steeper learning curve compared to the code-first approach of
+      the OpenAI Agents SDK.
     </p>
   </div>
+
+  <h3>Key LangGraph Patterns</h3>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Pattern</th>
+        <th>How It Works</th>
+        <th>Best For</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Supervisor</strong></td>
+        <td>Central agent decides which specialist node runs next via conditional edges</td>
+        <td>Customer support, task routing, multi-step workflows</td>
+      </tr>
+      <tr>
+        <td><strong>Collaboration</strong></td>
+        <td>Agents share a common message scratchpad — all work is visible to all agents</td>
+        <td>Brainstorming, research where context sharing is important</td>
+      </tr>
+      <tr>
+        <td><strong>Hierarchical Teams</strong></td>
+        <td>Nodes are themselves LangGraph subgraphs — teams within teams</td>
+        <td>Complex orgs: research team + writing team + review team</td>
+      </tr>
+      <tr>
+        <td><strong>Reflection</strong></td>
+        <td>Writer → Critic loop that iterates until quality threshold is met</td>
+        <td>Content generation, code review, self-correcting analysis</td>
+      </tr>
+      <tr>
+        <td><strong>Scatter-Gather</strong></td>
+        <td>Fan-out tasks to parallel agents, fan-in results to a synthesizer</td>
+        <td>Research across multiple sources, parallel data processing</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ 8. OPENAI AGENTS SDK -->
 <section id="agents-sdk">
 <div class="container">
-  <div class="section-label">08 — Framework</div>
+  <div class="section-label">08 — Code-First Framework</div>
   <h2>OpenAI Agents SDK</h2>
   <p>
     The <strong>OpenAI Agents SDK</strong> is a production-ready framework (successor to the
     experimental Swarm project) built around three primitives: <strong>Agents</strong>,
-    <strong>Handoffs</strong>, and <strong>Guardrails</strong>. It's deliberately lightweight
-    — you express workflow logic using familiar Python constructs rather than defining
-    explicit graph structures.
+    <strong>Handoffs</strong>, and <strong>Guardrails</strong>. Where LangGraph gives you
+    explicit graph control, the Agents SDK takes a <strong>code-first</strong> approach —
+    you express workflow logic using familiar Python constructs, and the framework handles
+    the loop, routing, and state management implicitly.
   </p>
 
   <table class="comparison-table">
@@ -1477,23 +1494,17 @@ footer a:hover { color: var(--text-bright); }
 <span class="cmt"># ── Guardrail: block off-topic math homework ──</span>
 <span class="kw">@</span><span class="fn">input_guardrail</span>
 <span class="kw">async def</span> <span class="fn">no_homework</span>(<span class="var">ctx</span>: <span class="type">RunContextWrapper</span>, <span class="var">agent</span>, <span class="var">input</span>):
-    <span class="cmt"># Use a cheap model to classify</span>
     <span class="var">result</span> = <span class="kw">await</span> <span class="type">Runner</span>.<span class="fn">run</span>(<span class="var">classifier</span>, <span class="var">input</span>)
     <span class="kw">return</span> <span class="type">GuardrailFunctionOutput</span>(
         <span class="var">tripwire_triggered</span>=<span class="str">"homework"</span> <span class="kw">in</span> <span class="var">result</span>.<span class="var">final_output</span>
     )
 
 <span class="cmt"># ── Specialist agents ──</span>
-<span class="var">orders_agent</span> = <span class="type">Agent</span>(
-    <span class="var">name</span>=<span class="str">"Orders"</span>,
-    <span class="var">instructions</span>=<span class="str">"Help customers track and manage their orders."</span>,
-    <span class="var">tools</span>=[<span class="var">lookup_order</span>],
-)
+<span class="var">orders_agent</span> = <span class="type">Agent</span>(<span class="var">name</span>=<span class="str">"Orders"</span>,
+    <span class="var">instructions</span>=<span class="str">"Help customers track orders."</span>, <span class="var">tools</span>=[<span class="var">lookup_order</span>])
 
-<span class="var">refund_agent</span> = <span class="type">Agent</span>(
-    <span class="var">name</span>=<span class="str">"Refunds"</span>,
-    <span class="var">instructions</span>=<span class="str">"Process refund requests. Always confirm the order ID."</span>,
-)
+<span class="var">refund_agent</span> = <span class="type">Agent</span>(<span class="var">name</span>=<span class="str">"Refunds"</span>,
+    <span class="var">instructions</span>=<span class="str">"Process refund requests."</span>)
 
 <span class="cmt"># ── Triage agent with handoffs + guardrails ──</span>
 <span class="var">triage</span> = <span class="type">Agent</span>(
@@ -1503,18 +1514,118 @@ footer a:hover { color: var(--text-bright); }
     <span class="var">input_guardrails</span>=[<span class="var">no_homework</span>],
 )
 
-<span class="cmt"># ── Run ──</span>
 <span class="var">result</span> = <span class="kw">await</span> <span class="type">Runner</span>.<span class="fn">run</span>(<span class="var">triage</span>, <span class="str">"Where is my order #12345?"</span>)
-<span class="fn">print</span>(<span class="var">result</span>.<span class="var">final_output</span>)
-<span class="cmt"># → "Your order #12345 has shipped and is arriving March 1!"</span></pre>
+<span class="cmt"># Triage → handoff → Orders agent → lookup_order tool → final reply</span></pre>
   </div>
+
+  <h3>LangGraph vs Agents SDK — When to Use Which</h3>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Dimension</th>
+        <th>LangGraph</th>
+        <th>OpenAI Agents SDK</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Mental model</strong></td>
+        <td>Explicit graph: nodes + edges + state</td>
+        <td>Implicit: agents + handoffs + tools</td>
+      </tr>
+      <tr>
+        <td><strong>Control flow</strong></td>
+        <td>You define the graph upfront</td>
+        <td>LLM decides dynamically via handoff tools</td>
+      </tr>
+      <tr>
+        <td><strong>State management</strong></td>
+        <td>Built-in typed state with reducers</td>
+        <td>Conversation history managed by runner</td>
+      </tr>
+      <tr>
+        <td><strong>Human-in-the-loop</strong></td>
+        <td>First-class: breakpoints, time-travel</td>
+        <td>Supported via approval callbacks</td>
+      </tr>
+      <tr>
+        <td><strong>Learning curve</strong></td>
+        <td>Steeper — graph concepts, state schemas</td>
+        <td>Gentler — just Python objects</td>
+      </tr>
+      <tr>
+        <td><strong>Best for</strong></td>
+        <td>Complex, inspectable, deterministic workflows</td>
+        <td>Quick agent routing, customer support triage</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ 9. OPENCLAW INFRASTRUCTURE -->
+<section id="openclaw">
+<div class="container">
+  <div class="section-label">09 — Production Infrastructure</div>
+  <h2>OpenClaw: The Deployment Layer</h2>
+  <p>
+    Frameworks like LangGraph and the Agents SDK define <em>how agents think and coordinate</em>.
+    But in production, agents need to be <strong>always-on</strong>, connected to real messaging
+    platforms, managing persistent sessions, and enforcing security boundaries.
+    <strong>OpenClaw</strong> is an open-source project (200k+ GitHub stars) that solves this
+    infrastructure layer — it's a <strong>gateway and deployment runtime</strong> that wraps
+    any agent loop with the plumbing needed to operate 24/7.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title" style="color: var(--accent);">Important Distinction</div>
+    <p>
+      OpenClaw's "multi-agent" is <strong>multi-persona routing</strong> — running isolated
+      agent brains behind different chat channels — not collaborative multi-agent orchestration.
+      A "work" agent on Telegram and a "personal" agent on WhatsApp don't talk to each other.
+      The orchestration patterns described earlier (supervisor, handoffs, chaining) happen
+      <em>inside</em> a single agent's runtime, not between OpenClaw agents.
+    </p>
+  </div>
+
+  <h3>What OpenClaw Provides</h3>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="concept-icon">🌐</div>
+      <h3>Multi-Channel Gateway</h3>
+      <p>A single Node.js process routes messages from WhatsApp, Telegram, Slack, Discord, Signal, iMessage, Teams, and 6+ more platforms through unified adapters.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🔒</div>
+      <h3>Security &amp; Policy</h3>
+      <p>5-level tool policy chain (global → provider → agent → session → sandbox). Approval gates for dangerous actions. Lane queues enforce serial execution per session.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🧠</div>
+      <h3>Persistent Memory</h3>
+      <p>JSONL transcripts for every turn. MEMORY.md files for durable knowledge. Compaction pipeline that summarizes long conversations to stay within context windows.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🔧</div>
+      <h3>Skill System</h3>
+      <p>SKILL.md files with YAML frontmatter that are selectively injected per turn. ClawHub registry for community-shared skills. Agents can even write their own skills.</p>
+    </div>
+  </div>
+
+  <p>
+    The architectural lesson from OpenClaw is that the agent loop itself (LLM → tools → loop)
+    is the easy part. The hard problems are channel normalization, session isolation, memory
+    persistence, security enforcement, and skill extensibility. OpenClaw delegates the "think and
+    act" cycle to the Pi Agent framework and focuses entirely on the infrastructure that makes
+    the agent <em>useful and safe</em> in production.
+  </p>
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ 9. TRACING -->
 <section id="tracing">
 <div class="container">
-  <div class="section-label">09 — Observability</div>
+  <div class="section-label">10 — Observability</div>
   <h2>Tracing &amp; Debugging</h2>
   <p>
     In a multi-agent system, understanding <em>what happened</em> is as important as making it happen.
@@ -1609,7 +1720,7 @@ footer a:hover { color: var(--text-bright); }
 <!-- ═══════════════════════════════════════════════════════ 10. PRODUCTION CHECKLIST -->
 <section id="production">
 <div class="container">
-  <div class="section-label">10 — Deployment</div>
+  <div class="section-label">11 — Deployment</div>
   <h2>Production Checklist</h2>
   <p>
     Moving from a prototype to production multi-agent system requires attention to reliability,
@@ -1699,7 +1810,8 @@ footer a:hover { color: var(--text-bright); }
     Multi-Agent Workflows — A Deep Technical Guide
     <br>
     Built for <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
-    Content references: <a href="https://openai.github.io/openai-agents-python/" target="_blank">OpenAI Agents SDK</a>,
+    Content references: <a href="https://www.langchain.com/langgraph" target="_blank">LangGraph</a>,
+    <a href="https://openai.github.io/openai-agents-python/" target="_blank">OpenAI Agents SDK</a>,
     <a href="https://docs.openclaw.ai/" target="_blank">OpenClaw Docs</a>,
     <a href="https://cdn.openai.com/business-guides-and-resources/a-practical-guide-to-building-agents.pdf" target="_blank">OpenAI Practical Guide to Agents</a>.
   </p>
