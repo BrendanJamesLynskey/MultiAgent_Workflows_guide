@@ -4,7 +4,7 @@
 
 A comprehensive, interactive guide to how AI agents coordinate, delegate, and execute — from the fundamental agent loop to production multi-agent orchestration.
 
-**[View the live guide →](https://brendanjameslynskey.github.io/MultiAgent_Workflows_guide/)**
+**[View the live guide →](https://brendanjameslynskey.github.io/OpenClaw_Guide/)**
 
 ## Overview
 
