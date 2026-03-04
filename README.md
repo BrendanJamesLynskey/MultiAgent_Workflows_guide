@@ -8,7 +8,7 @@ A comprehensive, interactive guide to how AI agents coordinate, delegate, and ex
 
 ## Overview
 
-This single-page interactive reference covers the full landscape of multi-agent AI systems, with real-world examples from **LangGraph**, the **OpenAI Agents SDK**, and **OpenClaw**. It is designed as an educational resource for engineers looking to understand and implement agentic architectures.
+This single-page interactive reference covers the full landscape of multi-agent AI systems, with real-world examples from **LangGraph** and the **OpenAI Agents SDK**. It is designed as an educational resource for engineers looking to understand and implement agentic architectures.
 
 ## Topics Covered
 
@@ -20,7 +20,6 @@ This single-page interactive reference covers the full landscape of multi-agent 
 - **Guardrails** — Input, output, and tool-level validation with tripwire-based halting
 - **LangGraph** — Graph-based orchestration using StateGraph, nodes, conditional edges, and cycles (supervisor, collaboration, hierarchical teams, reflection, scatter-gather patterns)
 - **OpenAI Agents SDK** — Code-first framework covering agents, handoffs, guardrails, sessions, tracing, function tools, and MCP servers
-- **OpenClaw Infrastructure** — Production infrastructure patterns
 - **Tracing & Debugging** — Observability across agent runs
 - **Production Checklist** — Deployment considerations for real-world multi-agent systems
 

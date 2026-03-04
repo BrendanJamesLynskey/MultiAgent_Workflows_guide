@@ -488,8 +488,7 @@ footer a:hover { color: var(--text-bright); }
   <p class="hero-sub">
     A comprehensive guide to how AI agents coordinate, delegate, and execute — from the
     fundamental agent loop to production multi-agent orchestration. With real-world examples
-    from <strong>LangGraph</strong>, the <strong>OpenAI Agents SDK</strong>, and
-    <strong>OpenClaw</strong>.
+    from <strong>LangGraph</strong> and the <strong>OpenAI Agents SDK</strong>.
   </p>
 </div>
 </header>
@@ -506,7 +505,6 @@ footer a:hover { color: var(--text-bright); }
     <a href="#guardrails">Guardrails</a>
     <a href="#langgraph">LangGraph</a>
     <a href="#agents-sdk">OpenAI Agents SDK</a>
-    <a href="#openclaw">OpenClaw Infrastructure</a>
     <a href="#tracing">Tracing &amp; Debugging</a>
     <a href="#production">Production Checklist</a>
   </div>
@@ -677,7 +675,7 @@ footer a:hover { color: var(--text-bright); }
   <div class="callout">
     <div class="callout-title" style="color: var(--accent);">Key Insight</div>
     <p>
-      This loop is universal. OpenClaw, the OpenAI Agents SDK, Claude Code, LangGraph — every
+      This loop is universal. The OpenAI Agents SDK, Claude Code, LangGraph — every
       serious agent framework runs some version of it. The differences lie in what wraps the loop:
       session management, memory persistence, routing, security, and skill injection.
     </p>
@@ -1563,69 +1561,10 @@ footer a:hover { color: var(--text-bright); }
 </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ 9. OPENCLAW INFRASTRUCTURE -->
-<section id="openclaw">
-<div class="container">
-  <div class="section-label">09 — Production Infrastructure</div>
-  <h2>OpenClaw: The Deployment Layer</h2>
-  <p>
-    Frameworks like LangGraph and the Agents SDK define <em>how agents think and coordinate</em>.
-    But in production, agents need to be <strong>always-on</strong>, connected to real messaging
-    platforms, managing persistent sessions, and enforcing security boundaries.
-    <strong>OpenClaw</strong> is an open-source project (200k+ GitHub stars) that solves this
-    infrastructure layer — it's a <strong>gateway and deployment runtime</strong> that wraps
-    any agent loop with the plumbing needed to operate 24/7.
-  </p>
-
-  <div class="callout">
-    <div class="callout-title" style="color: var(--accent);">Important Distinction</div>
-    <p>
-      OpenClaw's "multi-agent" is <strong>multi-persona routing</strong> — running isolated
-      agent brains behind different chat channels — not collaborative multi-agent orchestration.
-      A "work" agent on Telegram and a "personal" agent on WhatsApp don't talk to each other.
-      The orchestration patterns described earlier (supervisor, handoffs, chaining) happen
-      <em>inside</em> a single agent's runtime, not between OpenClaw agents.
-    </p>
-  </div>
-
-  <h3>What OpenClaw Provides</h3>
-  <div class="concept-grid">
-    <div class="concept-card">
-      <div class="concept-icon">🌐</div>
-      <h3>Multi-Channel Gateway</h3>
-      <p>A single Node.js process routes messages from WhatsApp, Telegram, Slack, Discord, Signal, iMessage, Teams, and 6+ more platforms through unified adapters.</p>
-    </div>
-    <div class="concept-card">
-      <div class="concept-icon">🔒</div>
-      <h3>Security &amp; Policy</h3>
-      <p>5-level tool policy chain (global → provider → agent → session → sandbox). Approval gates for dangerous actions. Lane queues enforce serial execution per session.</p>
-    </div>
-    <div class="concept-card">
-      <div class="concept-icon">🧠</div>
-      <h3>Persistent Memory</h3>
-      <p>JSONL transcripts for every turn. MEMORY.md files for durable knowledge. Compaction pipeline that summarizes long conversations to stay within context windows.</p>
-    </div>
-    <div class="concept-card">
-      <div class="concept-icon">🔧</div>
-      <h3>Skill System</h3>
-      <p>SKILL.md files with YAML frontmatter that are selectively injected per turn. ClawHub registry for community-shared skills. Agents can even write their own skills.</p>
-    </div>
-  </div>
-
-  <p>
-    The architectural lesson from OpenClaw is that the agent loop itself (LLM → tools → loop)
-    is the easy part. The hard problems are channel normalization, session isolation, memory
-    persistence, security enforcement, and skill extensibility. OpenClaw delegates the "think and
-    act" cycle to the Pi Agent framework and focuses entirely on the infrastructure that makes
-    the agent <em>useful and safe</em> in production.
-  </p>
-</div>
-</section>
-
 <!-- ═══════════════════════════════════════════════════════ 9. TRACING -->
 <section id="tracing">
 <div class="container">
-  <div class="section-label">10 — Observability</div>
+  <div class="section-label">09 — Observability</div>
   <h2>Tracing &amp; Debugging</h2>
   <p>
     In a multi-agent system, understanding <em>what happened</em> is as important as making it happen.
@@ -1710,9 +1649,9 @@ footer a:hover { color: var(--text-bright); }
     view traces in the OpenAI dashboard to debug exactly what happened and why.
   </p>
   <p>
-    In OpenClaw, every turn is written to a <strong>JSONL session transcript</strong> — a line-by-line
-    audit of messages, tool calls, execution results, and timing. This provides full replay capability
-    and serves as the basis for memory extraction and compaction.
+    In LangGraph, every state transition is recorded in the graph's execution history, enabling
+    full replay capability and the ability to step back to any prior state — a powerful primitive
+    for debugging complex multi-agent pipelines.
   </p>
 </div>
 </section>
@@ -1720,12 +1659,12 @@ footer a:hover { color: var(--text-bright); }
 <!-- ═══════════════════════════════════════════════════════ 10. PRODUCTION CHECKLIST -->
 <section id="production">
 <div class="container">
-  <div class="section-label">11 — Deployment</div>
+  <div class="section-label">10 — Deployment</div>
   <h2>Production Checklist</h2>
   <p>
     Moving from a prototype to production multi-agent system requires attention to reliability,
-    security, and observability. Here's a distilled checklist drawn from both the OpenAI Agents SDK
-    guidance and OpenClaw's production architecture.
+    security, and observability. Here's a distilled checklist drawn from the OpenAI Agents SDK
+    guidance and production deployment best practices.
   </p>
 
   <div class="step-grid">
@@ -1747,7 +1686,7 @@ footer a:hover { color: var(--text-bright); }
       <div class="step-num">✓</div>
       <div>
         <div class="step-title">Enforce serial execution per session</div>
-        <div class="step-desc">Prevent race conditions by serializing requests within a session. OpenClaw's lane queue system defaults to this. Parallelism should be opt-in for explicitly safe tasks.</div>
+        <div class="step-desc">Prevent race conditions by serializing requests within a session. Most production agent runtimes default to a lane queue model — parallelism should be opt-in for explicitly safe tasks.</div>
       </div>
     </div>
     <div class="step-card">
@@ -1782,7 +1721,7 @@ footer a:hover { color: var(--text-bright); }
       <div class="step-num">✓</div>
       <div>
         <div class="step-title">Manage context windows carefully</div>
-        <div class="step-desc">Monitor token counts. Implement compaction/summarization before hitting limits. OpenClaw uses a Context Window Guard that triggers summarization before the window overflows.</div>
+        <div class="step-desc">Monitor token counts. Implement compaction/summarization before hitting limits. Trigger summarization proactively before the context window overflows — don't wait for errors.</div>
       </div>
     </div>
     <div class="step-card">
@@ -1812,7 +1751,6 @@ footer a:hover { color: var(--text-bright); }
     Built for <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
     Content references: <a href="https://www.langchain.com/langgraph" target="_blank">LangGraph</a>,
     <a href="https://openai.github.io/openai-agents-python/" target="_blank">OpenAI Agents SDK</a>,
-    <a href="https://docs.openclaw.ai/" target="_blank">OpenClaw Docs</a>,
     <a href="https://cdn.openai.com/business-guides-and-resources/a-practical-guide-to-building-agents.pdf" target="_blank">OpenAI Practical Guide to Agents</a>.
   </p>
 </div>
